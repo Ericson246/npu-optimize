@@ -1,0 +1,96 @@
+package hfclient
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/url"
+)
+
+func (c *Client) SearchModels(filters []string, limit int) ([]ModelInfo, error) {
+	u, _ := url.Parse(c.BaseURL + "/api/models")
+	q := u.Query()
+
+	for _, f := range filters {
+		q.Add("filter", f)
+	}
+	q.Set("sort", "downloads")
+	q.Set("direction", "-1")
+	q.Set("limit", fmt.Sprintf("%d", limit))
+	q.Set("full", "true")
+	u.RawQuery = q.Encode()
+
+	rawURL := u.String()
+	cacheKey := c.cacheKey("search", rawURL)
+	if cached, ok := c.getFromCache(cacheKey); ok {
+		var resp SearchResponse
+		if err := json.Unmarshal(cached, &resp); err == nil {
+			return resp, nil
+		}
+	}
+
+	data, err := c.doRequest(rawURL)
+	if err != nil {
+		return nil, fmt.Errorf("search models: %w", err)
+	}
+
+	c.storeInCache(cacheKey, data, searchCacheTTL)
+
+	var resp SearchResponse
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return nil, fmt.Errorf("parsing search response: %w", err)
+	}
+
+	return resp, nil
+}
+
+func (c *Client) GetTree(repo string) ([]TreeEntry, error) {
+	rawURL := fmt.Sprintf("%s/api/models/%s/tree/main", c.BaseURL, repo)
+
+	cacheKey := c.cacheKey("tree", rawURL)
+	if cached, ok := c.getFromCache(cacheKey); ok {
+		var entries TreeResponse
+		if err := json.Unmarshal(cached, &entries); err == nil {
+			return entries, nil
+		}
+	}
+
+	data, err := c.doRequest(rawURL)
+	if err != nil {
+		return nil, fmt.Errorf("get tree: %w", err)
+	}
+
+	c.storeInCache(cacheKey, data, treeCacheTTL)
+
+	var entries TreeResponse
+	if err := json.Unmarshal(data, &entries); err != nil {
+		return nil, fmt.Errorf("parsing tree response: %w", err)
+	}
+
+	return entries, nil
+}
+
+func (c *Client) GetGGUFHeader(repo, file string) ([]byte, error) {
+	rawURL := fmt.Sprintf("%s/%s/resolve/main/%s", c.BaseURL, repo, file)
+
+	cacheKey := c.cacheKey("gguf", rawURL)
+	if cached, ok := c.getFromCache(cacheKey); ok {
+		return cached, nil
+	}
+
+	data, err := c.doWithRetry(func() (*http.Response, error) {
+		req, err := http.NewRequest("GET", rawURL, nil)
+		if err != nil {
+			return nil, err
+		}
+		c.setHeaders(req)
+		req.Header.Set("Range", "bytes=0-262144")
+		return c.HTTPClient.Do(req)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("get gguf header: %w", err)
+	}
+
+	c.storeInCache(cacheKey, data, ggufCacheTTL)
+	return data, nil
+}

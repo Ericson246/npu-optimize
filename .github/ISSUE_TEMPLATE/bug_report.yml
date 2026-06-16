@@ -1,0 +1,39 @@
+name: Bug Report
+description: Report an error
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened vs what was expected
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: npu-optimize version
+      placeholder: v0.1.0 or commit hash
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [Windows, Linux, macOS, Other]
+    validations:
+      required: true
+  - type: input
+    id: hardware
+    attributes:
+      label: Hardware (GPU, VRAM, CPU, RAM)
+      placeholder: RTX 4060 8GB, Ryzen 5 5600X 16GB
+  - type: textarea
+    id: log
+    attributes:
+      label: Relevant output/log
+      render: shell
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional information

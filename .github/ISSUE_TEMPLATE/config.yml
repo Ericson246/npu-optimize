@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Feature Request / Idea
+    url: https://github.com/Ericson246/npu-optimize/discussions
+    about: Feature suggestions go to Discussions, not Issues
+  - name: Question / Doubt
+    url: https://github.com/Ericson246/npu-optimize/discussions
+    about: General questions and discussions

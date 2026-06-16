@@ -8,9 +8,9 @@ import (
 
 func TestAppConstants(t *testing.T) {
 	assert.Equal(t, "npu-optimize", AppName)
-	assert.Equal(t, "0.1.0", Version)
+	assert.Equal(t, "0.1.1", Version)
 	assert.Equal(t, "MIT", License)
-	assert.Equal(t, "npu-optimize/0.1.0", UserAgent)
+	assert.Equal(t, "npu-optimize/0.1.1", UserAgent)
 }
 
 func TestDefaultValues(t *testing.T) {

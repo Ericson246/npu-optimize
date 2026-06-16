@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.1] - 2026-06-16
+
+### Fixed
+- Model selection uses best-fit instead of first-fit: now selects the largest
+  model that fits in VRAM instead of the first popular one (#1)
+- Batch file size resolution via HF paths-info API (more efficient than GetTree)
+- Increased candidate pool from 8 to 30 for better coverage
+
 ## [0.1.0] - 2026-06-15
 
 ### Added

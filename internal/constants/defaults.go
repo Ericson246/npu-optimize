@@ -1,8 +1,8 @@
 package constants
 
 var (
-	Version   = "0.1.0"
-	UserAgent = "npu-optimize/0.1.0"
+	Version   = "0.1.1"
+	UserAgent = "npu-optimize/0.1.1"
 )
 
 const (

@@ -12,6 +12,15 @@ linters:
     - ineffassign
     - typecheck
 
+linters-settings:
+  errcheck:
+    exclude-functions:
+      - (io.Closer).Close
+      - os.Remove
+      - os.Setenv
+      - os.Unsetenv
+      - (net/http.ResponseWriter).Write
+
 issues:
   exclude-use-default: false
   max-issues-per-linter: 0

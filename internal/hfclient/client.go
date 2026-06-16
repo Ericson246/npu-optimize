@@ -104,7 +104,7 @@ func (c *Client) doWithRetry(fn requestFunc) ([]byte, error) {
 		case resp.StatusCode == http.StatusTooManyRequests:
 			retryAfter = parseRetryAfter(resp.Header.Get("Retry-After"))
 			lastErr = &RateLimitError{
-				msg:        fmt.Sprintf("rate limited by HuggingFace API"),
+				msg:        "rate limited by HuggingFace API",
 				RetryAfter: retryAfter,
 				Limit:      limitInfo,
 			}

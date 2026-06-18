@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "npu-optimize detect output v2",
+  "type": "object",
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "type": "integer", "minimum": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "tool_version": { "type": "string" },
+    "backend": { "type": "string" },
+    "mode_used": { "type": "string" },
+    "viable": { "type": "boolean" },
+    "hardware_fingerprint": { "type": "string" },
+    "hardware": { "$ref": "#/$defs/HardwareInfo" },
+    "recommended": { "$ref": "#/$defs/Recommended" },
+    "runtime_recommendation": { "$ref": "#/$defs/RuntimeRecommend" },
+    "inference_params": { "$ref": "#/$defs/InferenceParams" },
+    "backend_params": { "$ref": "#/$defs/BackendParams" },
+    "fallbacks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/FallbackEntry" }
+    }
+  },
+  "required": ["version", "generated_at", "tool_version", "backend", "viable"],
+  "$defs": {
+    "HardwareInfo": {
+      "type": "object",
+      "properties": {
+        "gpu": {
+          "type": "object",
+          "properties": {
+            "vendor": { "type": "string" },
+            "name": { "type": "string" },
+            "vram_total_mb": { "type": "integer" },
+            "vram_free_mb": { "type": "integer" },
+            "integrated": { "type": "boolean" },
+            "backends": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Available GPU backends detected on system"
+            }
+          }
+        },
+        "cpu": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "cores": { "type": "integer" },
+            "threads": { "type": "integer" },
+            "isa": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "CPU instruction set extensions"
+            }
+          }
+        },
+        "ram_total_mb": { "type": "integer" },
+        "ram_free_mb": { "type": "integer" }
+      }
+    },
+    "Recommended": {
+      "type": "object",
+      "properties": {
+        "repo": { "type": "string" },
+        "file": { "type": "string" },
+        "download_url": { "type": "string", "format": "uri" },
+        "sha256": { "type": "string" },
+        "size_bytes": { "type": "integer" },
+        "architecture": { "type": "string" },
+        "architecture_type": { "type": "string" },
+        "multimodal": { "type": "boolean" },
+        "n_layers": { "type": "integer" },
+        "n_kv_heads": { "type": "integer" },
+        "head_dim": { "type": "integer" },
+        "n_experts": { "type": "integer" },
+        "n_experts_used": { "type": "integer" },
+        "n_mtp_heads": { "type": "integer" },
+        "fits_in_vram": { "type": "boolean" },
+        "vram_formula_used": { "type": "string" },
+        "vram_margin_mb": { "type": "integer" },
+        "n_gpu_layers": { "type": "integer" },
+        "ctx_max_estimate": { "type": "integer" },
+        "ts_estimated": { "type": "number" }
+      }
+    },
+    "RuntimeRecommend": {
+      "type": "object",
+      "properties": {
+        "backend": { "type": "string" },
+        "version": { "type": "string" },
+        "source": { "type": "string" },
+        "download_url": { "type": "string", "format": "uri" },
+        "sha256": { "type": "string" },
+        "size_bytes": { "type": "integer" },
+        "format": { "type": "string" }
+      },
+      "required": ["backend", "source", "download_url"]
+    },
+    "InferenceParams": {
+      "type": "object",
+      "properties": {
+        "n_gpu_layers": { "type": "integer" },
+        "threads": { "type": "integer" },
+        "n_batch": { "type": "integer" },
+        "n_ubatch": { "type": "integer" },
+        "ctx_size": { "type": "integer" },
+        "flash_attn": { "type": "boolean" },
+        "cache_type_k": { "type": "string" },
+        "cache_type_v": { "type": "string" }
+      }
+    },
+    "BackendParams": {
+      "type": "object",
+      "properties": {
+        "llama.cpp": {
+          "type": "object",
+          "properties": {
+            "no_mmap": { "type": "boolean" },
+            "mlock": { "type": "boolean" },
+            "cpu_moe": { "type": "boolean" },
+            "spec_type": { "type": "string" }
+          }
+        }
+      }
+    },
+    "FallbackEntry": {
+      "type": "object",
+      "properties": {
+        "file": { "type": "string" },
+        "size_bytes": { "type": "integer" },
+        "sha256": { "type": "string" },
+        "fits_in_vram": { "type": "boolean" },
+        "reason": { "type": "string" }
+      }
+    }
+  }
+}

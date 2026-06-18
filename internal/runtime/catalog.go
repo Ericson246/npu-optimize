@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const catalogURL = "https://Ericson246.github.io/llama.cpp/runtime-catalog.json"
+const catalogURL = "https://Ericson246.github.io/npu-optimize/runtime-catalog.json"
 
 func FetchCatalog(url string) (*Catalog, error) {
 	if url == "" {

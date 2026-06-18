@@ -115,6 +115,7 @@ npu-optimize [persistent flags] <command> [flags]
 | `--ctx-size` | `-c` | `16384` | Minimum required context size |
 | `--mode` | `-m` | `auto` | `auto` (decides alone), `gpu-only` (VRAM only), `partial` (CPU+GPU offload) |
 | `--vram-margin` | | `1024` | VRAM safety margin in MB for manual formula (avoid OOM) |
+| `--prefer-backend` | | `""` | Preferred inference backend: cuda, rocm, openvino, vulkan, cpu |
 
 #### benchmark-specific flags
 
@@ -400,7 +401,7 @@ Full implementation in v0.2.0. v0.1.0 only has skeleton structure.
 | npu-optimize version | Default output schema | Supported schemas | Notes |
 |:---------------------|:---------------------|:------------------|:------|
 | v0.1.0 | v1 | v1 | Only `detect` command |
-| v0.2.0+ | v2 (default), v1 with `--output-schema-version 1` | v1, v2 | Adds `llama_bench`, `proxy_benchmark` |
+| v0.2.0+ | v2 (default), v1 with `--output-schema-version 1` | v1, v2 | Adds `runtime_recommendation`, `download_url`, `backends`, `isa` |
 | v1.0.0+ | v2+ | v1+ | Stable. Breaking changes require schema major version |
 
 `--output-schema-version` flag behavior:
@@ -514,8 +515,9 @@ Flow:
 | Version | Subcommand | Scope | Model used |
 |:--------|:-----------|:------|:-----------|
 | **v0.1.0** | `detect` | Dry-run: detect HW + HF API + GGUF header + manual VRAM formula + JSON output. No downloads. | None |
-| **v0.2.0** | `benchmark` | Proxy benchmark: download proxy + llama-bench auto + `--fit` + extrapolate t/s + detect MoE/MTP architecture + output schema v2 | Proxy (~100MB) |
-| **v0.3.0** | `optimize` | Full: download real model + `--fit` + full flag sweep (MoE offload, MTP, KV cache) + binary search | Candidate model |
+| **v0.2.0** | `detect` (extended) | Hardware detection v2 (backend probing: CUDA, ROCm, OpenVINO, Vulkan, Metal) + runtime catalog + runtime recommendation + output schema v2 + `--prefer-backend` flag | None |
+| **v0.3.0** | `benchmark` | Proxy benchmark: download proxy + llama-bench auto + `--fit` + extrapolate t/s + detect MoE/MTP architecture | Proxy (~100MB) |
+| **v0.4.0** | `optimize` | Full: download real model + `--fit` + full flag sweep (MoE offload, MTP, KV cache) + binary search | Candidate model |
 
 ### Future Platforms
 

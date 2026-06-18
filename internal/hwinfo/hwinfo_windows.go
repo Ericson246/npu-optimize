@@ -40,7 +40,7 @@ func detectBackends(info *Info) {
 	if hasCUDARuntime() {
 		backends = append(backends, "cuda")
 	}
-	if hasROCmRuntime() {
+	if hasROCmRuntime() && info.GPU != nil && info.GPU.Vendor == "amd" {
 		backends = append(backends, "rocm")
 	}
 	if hasOpenVINORuntime() {
@@ -62,12 +62,14 @@ func detectBackends(info *Info) {
 }
 
 func hasCUDARuntime() bool {
-	lib, err := syscall.LoadLibrary("nvcuda.dll")
-	if err != nil {
-		return false
+	for _, name := range []string{"cudart64_12.dll", "cudart64_13.dll", "cudart64_11.dll"} {
+		lib, err := syscall.LoadLibrary(name)
+		if err == nil {
+			syscall.FreeLibrary(lib)
+			return true
+		}
 	}
-	syscall.FreeLibrary(lib)
-	return true
+	return false
 }
 
 func hasROCmRuntime() bool {

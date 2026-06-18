@@ -42,7 +42,7 @@ func detectBackends(info *Info) {
 	if hasCUDARuntime() {
 		backends = append(backends, "cuda")
 	}
-	if hasROCmRuntime() {
+	if hasROCmRuntime() && info.GPU != nil && info.GPU.Vendor == "amd" {
 		backends = append(backends, "rocm")
 	}
 	if hasOpenVINORuntime() {

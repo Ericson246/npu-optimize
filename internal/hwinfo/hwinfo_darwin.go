@@ -1,6 +1,10 @@
 package hwinfo
 
 import (
+	"log/slog"
+	"os/exec"
+	"strings"
+
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
 )
@@ -10,6 +14,7 @@ func detect() (*Info, error) {
 	detectCPU(info)
 	detectRAM(info)
 	detectGPU(info)
+	detectBackends(info)
 	return info, nil
 }
 
@@ -28,4 +33,23 @@ func detectRAM(info *Info) {
 		info.RAMTotalMB = int64(vmem.Total / 1024 / 1024)
 		info.RAMFreeMB = int64(vmem.Available / 1024 / 1024)
 	}
+}
+
+func detectBackends(info *Info) {
+	backends := []string{"metal"}
+
+	if hasVulkanRuntime() {
+		backends = append(backends, "vulkan")
+	}
+
+	if info.GPU != nil {
+		info.GPU.Backends = backends
+	}
+
+	slog.Debug("detected backends", "backends", backends)
+}
+
+func hasVulkanRuntime() bool {
+	cmd := exec.Command("vulkaninfo", "--summary")
+	return cmd.Run() == nil
 }

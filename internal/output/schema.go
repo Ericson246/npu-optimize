@@ -3,19 +3,20 @@ package output
 import "time"
 
 type Output struct {
-	Schema              string           `json:"$schema"`
-	Version             int              `json:"version"`
-	GeneratedAt         time.Time        `json:"generated_at"`
-	ToolVersion         string           `json:"tool_version"`
-	Backend             string           `json:"backend"`
-	ModeUsed            string           `json:"mode_used"`
-	Viable              bool             `json:"viable"`
-	HardwareFingerprint string           `json:"hardware_fingerprint"`
-	Hardware            *HardwareInfo    `json:"hardware"`
-	Recommended         *Recommended     `json:"recommended,omitempty"`
-	InferenceParams     *InferenceParams `json:"inference_params,omitempty"`
-	BackendParams       *BackendParams   `json:"backend_params,omitempty"`
-	Fallbacks           []FallbackEntry  `json:"fallbacks,omitempty"`
+	Schema              string            `json:"$schema"`
+	Version             int               `json:"version"`
+	GeneratedAt         time.Time         `json:"generated_at"`
+	ToolVersion         string            `json:"tool_version"`
+	Backend             string            `json:"backend"`
+	ModeUsed            string            `json:"mode_used"`
+	Viable              bool              `json:"viable"`
+	HardwareFingerprint string            `json:"hardware_fingerprint"`
+	Hardware            *HardwareInfo     `json:"hardware"`
+	Recommended         *Recommended      `json:"recommended,omitempty"`
+	RuntimeRecommend    *RuntimeRecommend `json:"runtime_recommendation,omitempty"`
+	InferenceParams     *InferenceParams  `json:"inference_params,omitempty"`
+	BackendParams       *BackendParams    `json:"backend_params,omitempty"`
+	Fallbacks           []FallbackEntry   `json:"fallbacks,omitempty"`
 }
 
 type HardwareInfo struct {
@@ -26,22 +27,35 @@ type HardwareInfo struct {
 }
 
 type GPUInfo struct {
-	Vendor      string `json:"vendor"`
-	Name        string `json:"name"`
-	VRAMTotalMB int64  `json:"vram_total_mb"`
-	VRAMFreeMB  int64  `json:"vram_free_mb"`
-	Integrated  bool   `json:"integrated"`
+	Vendor      string   `json:"vendor"`
+	Name        string   `json:"name"`
+	VRAMTotalMB int64    `json:"vram_total_mb"`
+	VRAMFreeMB  int64    `json:"vram_free_mb"`
+	Integrated  bool     `json:"integrated"`
+	Backends    []string `json:"backends,omitempty"`
 }
 
 type CPUInfo struct {
-	Name    string `json:"name"`
-	Cores   int    `json:"cores"`
-	Threads int    `json:"threads"`
+	Name    string   `json:"name"`
+	Cores   int      `json:"cores"`
+	Threads int      `json:"threads"`
+	ISA     []string `json:"isa,omitempty"`
+}
+
+type RuntimeRecommend struct {
+	Backend     string `json:"backend"`
+	Version     string `json:"version,omitempty"`
+	Source      string `json:"source"`
+	DownloadURL string `json:"download_url"`
+	SHA256      string `json:"sha256"`
+	SizeBytes   int64  `json:"size_bytes"`
+	Format      string `json:"format"`
 }
 
 type Recommended struct {
 	Repo             string   `json:"repo"`
 	File             string   `json:"file"`
+	DownloadURL      string   `json:"download_url,omitempty"`
 	SHA256           string   `json:"sha256,omitempty"`
 	SizeBytes        int64    `json:"size_bytes"`
 	Architecture     string   `json:"architecture"`
@@ -86,6 +100,7 @@ type LlamaCppParams struct {
 type FallbackEntry struct {
 	File       string `json:"file"`
 	SizeBytes  int64  `json:"size_bytes"`
+	SHA256     string `json:"sha256,omitempty"`
 	FitsInVRAM bool   `json:"fits_in_vram"`
 	Reason     string `json:"reason"`
 }

@@ -1,17 +1,19 @@
 package hwinfo
 
 type GPUInfo struct {
-	Vendor      string `json:"vendor"`
-	Name        string `json:"name"`
-	VRAMTotalMB int64  `json:"vram_total_mb"`
-	VRAMFreeMB  int64  `json:"vram_free_mb"`
-	Integrated  bool   `json:"integrated"`
+	Vendor      string   `json:"vendor"`
+	Name        string   `json:"name"`
+	VRAMTotalMB int64    `json:"vram_total_mb"`
+	VRAMFreeMB  int64    `json:"vram_free_mb"`
+	Integrated  bool     `json:"integrated"`
+	Backends    []string `json:"backends,omitempty"`
 }
 
 type CPUInfo struct {
-	Name    string `json:"name"`
-	Cores   int    `json:"cores"`
-	Threads int    `json:"threads"`
+	Name    string   `json:"name"`
+	Cores   int      `json:"cores"`
+	Threads int      `json:"threads"`
+	ISA     []string `json:"isa,omitempty"`
 }
 
 type Info struct {

@@ -2,7 +2,7 @@ name: Sync Runtime Catalog
 
 on:
   schedule:
-    - cron: '0 4 * * *'
+    - cron: '0 23 * * *'
   workflow_dispatch:
 
 permissions:
@@ -12,16 +12,18 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+        with:
+          token: ${{ secrets.GH_RELEASE_TOKEN }}
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: '1.26'
 
       - name: Sync runtime catalog
         run: go run ./tools/sync-catalog/
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_RELEASE_TOKEN }}
 
       - name: Commit if changed
         run: |

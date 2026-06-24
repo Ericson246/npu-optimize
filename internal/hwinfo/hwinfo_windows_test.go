@@ -89,3 +89,19 @@ func TestBuildFromWMI_Apple(t *testing.T) {
 	assert.Equal(t, "apple", gpu.Vendor)
 	assert.True(t, gpu.Integrated)
 }
+
+func TestCUDALibs_Data(t *testing.T) {
+	assert.Greater(t, len(cudaLibs), 0)
+	for _, l := range cudaLibs {
+		assert.Contains(t, l.name, ".dll")
+		assert.NotEmpty(t, l.version)
+	}
+}
+
+func TestROCmLibs_Data(t *testing.T) {
+	assert.Greater(t, len(rocmLibs), 0)
+	for _, l := range rocmLibs {
+		assert.Contains(t, l.name, ".dll")
+		assert.NotEmpty(t, l.version)
+	}
+}

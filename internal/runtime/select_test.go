@@ -107,7 +107,7 @@ func nvidiaHW() *hwinfo.Info {
 			VRAMTotalMB: 8192,
 			VRAMFreeMB:  7000,
 			Integrated:  false,
-			Backends:    []string{"cuda", "vulkan"},
+			Backends:    []hwinfo.BackendInfo{{Name: "cuda"}, {Name: "vulkan"}},
 		},
 		CPU: hwinfo.CPUInfo{
 			Name:    "Intel",
@@ -127,7 +127,7 @@ func integratedGPUHW() *hwinfo.Info {
 			VRAMTotalMB: 0,
 			VRAMFreeMB:  4000,
 			Integrated:  true,
-			Backends:    []string{"vulkan"},
+			Backends:    []hwinfo.BackendInfo{{Name: "vulkan"}},
 		},
 		CPU: hwinfo.CPUInfo{
 			Name:    "Intel",

@@ -82,8 +82,8 @@ func priorityBackends(hw *hwinfo.Info, prefer string) []Backend {
 
 	available := map[Backend]bool{}
 	if hw.GPU != nil {
-		for _, name := range hw.GPU.Backends {
-			switch name {
+		for _, b := range hw.GPU.Backends {
+			switch b.Name {
 			case "cuda":
 				available[BackendCUDA] = true
 			case "rocm":

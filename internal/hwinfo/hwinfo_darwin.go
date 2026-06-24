@@ -38,10 +38,12 @@ func detectRAM(info *Info) {
 }
 
 func detectBackends(info *Info) {
-	backends := []string{"metal"}
+	backends := []BackendInfo{
+		{Name: "metal", DetectedLib: "Metal.framework"},
+	}
 
-	if hasVulkanRuntime() {
-		backends = append(backends, "vulkan")
+	if lib, _, ok := detectVulkanRuntime(); ok {
+		backends = append(backends, BackendInfo{Name: "vulkan", DetectedLib: lib})
 	}
 
 	if info.GPU != nil {
@@ -51,9 +53,12 @@ func detectBackends(info *Info) {
 	slog.Debug("detected backends", "backends", backends)
 }
 
-func hasVulkanRuntime() bool {
+func detectVulkanRuntime() (lib, version string, ok bool) {
 	cmd := exec.Command("vulkaninfo", "--summary")
-	return cmd.Run() == nil
+	if cmd.Run() != nil {
+		return "", "", false
+	}
+	return "vulkaninfo", "", true
 }
 
 type darwinDisplay struct {

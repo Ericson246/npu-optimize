@@ -37,24 +37,39 @@ func detectRAM(info *Info) {
 	}
 }
 
-func detectBackends(info *Info) {
-	backends := []string{}
+type cudaLib struct{ name, version string }
 
-	if hasCUDARuntime() {
-		backends = append(backends, "cuda")
+var cudaLibs = []cudaLib{
+	{"cudart64_12.dll", "12"},
+	{"cudart64_13.dll", "13"},
+	{"cudart64_11.dll", "11"},
+}
+
+type rocmLib struct{ name, version string }
+
+var rocmLibs = []rocmLib{
+	{"amdhip64_7.dll", "7"},
+	{"amdhip64_6.dll", "6"},
+}
+
+func detectBackends(info *Info) {
+	backends := []BackendInfo{}
+
+	if lib, ver, ok := detectCUDARuntime(); ok {
+		backends = append(backends, BackendInfo{Name: "cuda", Version: ver, DetectedLib: lib})
 	}
-	if hasROCmRuntime() && info.GPU != nil && info.GPU.Vendor == "amd" {
-		backends = append(backends, "rocm")
+	if lib, ver, ok := detectROCmRuntime(); ok && info.GPU != nil && info.GPU.Vendor == "amd" {
+		backends = append(backends, BackendInfo{Name: "rocm", Version: ver, DetectedLib: lib})
 	}
-	if hasOpenVINORuntime() {
-		backends = append(backends, "openvino")
+	if lib, _, ok := detectOpenVINORuntime(); ok {
+		backends = append(backends, BackendInfo{Name: "openvino", DetectedLib: lib})
 	}
-	if hasVulkanRuntime() {
-		backends = append(backends, "vulkan")
+	if lib, _, ok := detectVulkanRuntime(); ok {
+		backends = append(backends, BackendInfo{Name: "vulkan", DetectedLib: lib})
 	}
 
 	if len(backends) == 0 {
-		backends = append(backends, "cpu")
+		backends = append(backends, BackendInfo{Name: "cpu"})
 	}
 
 	if info.GPU != nil {
@@ -64,44 +79,44 @@ func detectBackends(info *Info) {
 	slog.Debug("detected backends", "backends", backends)
 }
 
-func hasCUDARuntime() bool {
-	for _, name := range []string{"cudart64_12.dll", "cudart64_13.dll", "cudart64_11.dll"} {
-		lib, err := syscall.LoadLibrary(name)
+func detectCUDARuntime() (lib, version string, ok bool) {
+	for _, dll := range cudaLibs {
+		h, err := syscall.LoadLibrary(dll.name)
 		if err == nil {
-			_ = syscall.FreeLibrary(lib)
-			return true
+			_ = syscall.FreeLibrary(h)
+			return dll.name, dll.version, true
 		}
 	}
-	return false
+	return "", "", false
 }
 
-func hasROCmRuntime() bool {
-	for _, name := range []string{"amdhip64_7.dll", "amdhip64_6.dll"} {
-		lib, err := syscall.LoadLibrary(name)
+func detectROCmRuntime() (lib, version string, ok bool) {
+	for _, dll := range rocmLibs {
+		h, err := syscall.LoadLibrary(dll.name)
 		if err == nil {
-			_ = syscall.FreeLibrary(lib)
-			return true
+			_ = syscall.FreeLibrary(h)
+			return dll.name, dll.version, true
 		}
 	}
-	return false
+	return "", "", false
 }
 
-func hasOpenVINORuntime() bool {
-	lib, err := syscall.LoadLibrary("openvino.dll")
+func detectOpenVINORuntime() (lib, version string, ok bool) {
+	h, err := syscall.LoadLibrary("openvino.dll")
 	if err != nil {
-		return false
+		return "", "", false
 	}
-	_ = syscall.FreeLibrary(lib)
-	return true
+	_ = syscall.FreeLibrary(h)
+	return "openvino.dll", "", true
 }
 
-func hasVulkanRuntime() bool {
-	lib, err := syscall.LoadLibrary("vulkan-1.dll")
+func detectVulkanRuntime() (lib, version string, ok bool) {
+	h, err := syscall.LoadLibrary("vulkan-1.dll")
 	if err != nil {
-		return false
+		return "", "", false
 	}
-	_ = syscall.FreeLibrary(lib)
-	return true
+	_ = syscall.FreeLibrary(h)
+	return "vulkan-1.dll", "", true
 }
 
 func detectVulkanGPUFallback(info *Info) bool {

@@ -40,23 +40,23 @@ func detectRAM(info *Info) {
 }
 
 func detectBackends(info *Info) {
-	backends := []string{}
+	backends := []BackendInfo{}
 
-	if hasCUDARuntime() {
-		backends = append(backends, "cuda")
+	if lib, ver, ok := detectCUDARuntime(); ok {
+		backends = append(backends, BackendInfo{Name: "cuda", Version: ver, DetectedLib: lib})
 	}
-	if hasROCmRuntime() && info.GPU != nil && info.GPU.Vendor == "amd" {
-		backends = append(backends, "rocm")
+	if lib, ver, ok := detectROCmRuntime(); ok && info.GPU != nil && info.GPU.Vendor == "amd" {
+		backends = append(backends, BackendInfo{Name: "rocm", Version: ver, DetectedLib: lib})
 	}
-	if hasOpenVINORuntime() {
-		backends = append(backends, "openvino")
+	if lib, _, ok := detectOpenVINORuntime(); ok {
+		backends = append(backends, BackendInfo{Name: "openvino", DetectedLib: lib})
 	}
-	if hasVulkanRuntime() {
-		backends = append(backends, "vulkan")
+	if lib, _, ok := detectVulkanRuntime(); ok {
+		backends = append(backends, BackendInfo{Name: "vulkan", DetectedLib: lib})
 	}
 
 	if len(backends) == 0 {
-		backends = append(backends, "cpu")
+		backends = append(backends, BackendInfo{Name: "cpu"})
 	}
 
 	if info.GPU != nil {
@@ -66,47 +66,68 @@ func detectBackends(info *Info) {
 	slog.Debug("detected backends", "backends", backends)
 }
 
-func hasCUDARuntime() bool {
+func detectCUDARuntime() (lib, version string, ok bool) {
 	_, err := os.Stat("/proc/driver/nvidia")
-	return err == nil
+	if err != nil {
+		return "", "", false
+	}
+	return detectSoVersion("libcudart.so")
 }
 
-func hasROCmRuntime() bool {
+func detectROCmRuntime() (lib, version string, ok bool) {
 	_, err := os.Stat("/sys/class/kfd")
 	if err != nil {
-		return false
+		return "", "", false
 	}
-	cmd := exec.Command("ldconfig", "-p")
-	out, err := cmd.Output()
-	if err != nil {
-		return false
-	}
-	return strings.Contains(string(out), "librocm")
+	return detectSoVersion("libamdhip64.so")
 }
 
-func hasOpenVINORuntime() bool {
+func detectOpenVINORuntime() (lib, version string, ok bool) {
 	dirs := []string{"/opt/intel/openvino", "/opt/intel/openvino_2026"}
 	for _, dir := range dirs {
-		_, err := os.Stat(dir)
-		if err == nil {
-			return true
+		if _, err := os.Stat(dir); err == nil {
+			return dir, "", true
 		}
 	}
+	return detectSoVersion("libopenvino.so")
+}
+
+func detectVulkanRuntime() (lib, version string, ok bool) {
+	paths := []string{
+		"/usr/lib/x86_64-linux-gnu/libvulkan.so",
+		"/usr/lib/aarch64-linux-gnu/libvulkan.so",
+	}
+	for _, path := range paths {
+		if _, err := os.Stat(path); err == nil {
+			return path, "", true
+		}
+	}
+	return "", "", false
+}
+
+func detectSoVersion(soPrefix string) (lib, version string, ok bool) {
 	cmd := exec.Command("ldconfig", "-p")
 	out, err := cmd.Output()
 	if err != nil {
-		return false
+		return "", "", false
 	}
-	return strings.Contains(string(out), "libopenvino.so")
+	return parseSoVersion(soPrefix, string(out))
 }
 
-func hasVulkanRuntime() bool {
-	_, err := os.Stat("/usr/lib/x86_64-linux-gnu/libvulkan.so")
-	if err == nil {
-		return true
+func parseSoVersion(soPrefix, ldconfigOutput string) (lib, version string, ok bool) {
+	for _, line := range strings.Split(ldconfigOutput, "\n") {
+		if !strings.Contains(line, soPrefix) {
+			continue
+		}
+		parts := strings.Fields(line)
+		if len(parts) == 0 {
+			continue
+		}
+		soname := parts[0]
+		ver := strings.TrimPrefix(soname, soPrefix+".")
+		return soname, ver, true
 	}
-	_, err = os.Stat("/usr/lib/aarch64-linux-gnu/libvulkan.so")
-	return err == nil
+	return "", "", false
 }
 
 var vulkanDrivers = map[string]bool{

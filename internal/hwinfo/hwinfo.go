@@ -1,12 +1,18 @@
 package hwinfo
 
+type BackendInfo struct {
+	Name        string `json:"name"`
+	Version     string `json:"version,omitempty"`
+	DetectedLib string `json:"detected_lib,omitempty"`
+}
+
 type GPUInfo struct {
-	Vendor      string   `json:"vendor"`
-	Name        string   `json:"name"`
-	VRAMTotalMB int64    `json:"vram_total_mb"`
-	VRAMFreeMB  int64    `json:"vram_free_mb"`
-	Integrated  bool     `json:"integrated"`
-	Backends    []string `json:"backends,omitempty"`
+	Vendor      string        `json:"vendor"`
+	Name        string        `json:"name"`
+	VRAMTotalMB int64         `json:"vram_total_mb"`
+	VRAMFreeMB  int64         `json:"vram_free_mb"`
+	Integrated  bool          `json:"integrated"`
+	Backends    []BackendInfo `json:"backends,omitempty"`
 }
 
 type CPUInfo struct {

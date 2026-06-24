@@ -226,13 +226,21 @@ func runDetect() error {
 	}
 
 	if hw.GPU != nil {
+		backends := make([]output.BackendInfo, len(hw.GPU.Backends))
+		for i, b := range hw.GPU.Backends {
+			backends[i] = output.BackendInfo{
+				Name:        b.Name,
+				Version:     b.Version,
+				DetectedLib: b.DetectedLib,
+			}
+		}
 		result.Hardware.GPU = &output.GPUInfo{
 			Vendor:      hw.GPU.Vendor,
 			Name:        hw.GPU.Name,
 			VRAMTotalMB: hw.GPU.VRAMTotalMB,
 			VRAMFreeMB:  hw.GPU.VRAMFreeMB,
 			Integrated:  hw.GPU.Integrated,
-			Backends:    hw.GPU.Backends,
+			Backends:    backends,
 		}
 	}
 

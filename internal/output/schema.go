@@ -26,13 +26,19 @@ type HardwareInfo struct {
 	RAMFreeMB  int64    `json:"ram_free_mb"`
 }
 
+type BackendInfo struct {
+	Name        string `json:"name"`
+	Version     string `json:"version,omitempty"`
+	DetectedLib string `json:"detected_lib,omitempty"`
+}
+
 type GPUInfo struct {
-	Vendor      string   `json:"vendor"`
-	Name        string   `json:"name"`
-	VRAMTotalMB int64    `json:"vram_total_mb"`
-	VRAMFreeMB  int64    `json:"vram_free_mb"`
-	Integrated  bool     `json:"integrated"`
-	Backends    []string `json:"backends,omitempty"`
+	Vendor      string        `json:"vendor"`
+	Name        string        `json:"name"`
+	VRAMTotalMB int64         `json:"vram_total_mb"`
+	VRAMFreeMB  int64         `json:"vram_free_mb"`
+	Integrated  bool          `json:"integrated"`
+	Backends    []BackendInfo `json:"backends,omitempty"`
 }
 
 type CPUInfo struct {
@@ -43,13 +49,14 @@ type CPUInfo struct {
 }
 
 type RuntimeRecommend struct {
-	Backend     string `json:"backend"`
-	Version     string `json:"version,omitempty"`
-	Source      string `json:"source"`
-	DownloadURL string `json:"download_url"`
-	SHA256      string `json:"sha256"`
-	SizeBytes   int64  `json:"size_bytes"`
-	Format      string `json:"format"`
+	Backend        string `json:"backend"`
+	BackendVersion string `json:"backend_version,omitempty"`
+	Version        string `json:"version,omitempty"`
+	Source         string `json:"source"`
+	DownloadURL    string `json:"download_url"`
+	SHA256         string `json:"sha256"`
+	SizeBytes      int64  `json:"size_bytes"`
+	Format         string `json:"format"`
 }
 
 type Recommended struct {

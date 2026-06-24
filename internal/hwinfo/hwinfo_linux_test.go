@@ -61,3 +61,38 @@ func TestPCIClassConstants(t *testing.T) {
 	assert.Equal(t, "0x030000", pciClassVGA)
 	assert.Equal(t, "0x038000", pciClassDisplay)
 }
+
+func TestParseSoVersion_CUDA(t *testing.T) {
+	output := `libcudart.so.12 (libc6,x86-64) => /usr/lib/x86_64-linux-gnu/libcudart.so.12.4`
+	soname, ver, ok := parseSoVersion("libcudart.so", output)
+	assert.True(t, ok)
+	assert.Equal(t, "libcudart.so.12", soname)
+	assert.Equal(t, "12", ver)
+}
+
+func TestParseSoVersion_ROCm(t *testing.T) {
+	output := `libamdhip64.so.6 (libc6,x86-64) => /opt/rocm/lib/libamdhip64.so.6.2.0`
+	soname, ver, ok := parseSoVersion("libamdhip64.so", output)
+	assert.True(t, ok)
+	assert.Equal(t, "libamdhip64.so.6", soname)
+	assert.Equal(t, "6", ver)
+}
+
+func TestParseSoVersion_OpenVINO(t *testing.T) {
+	output := `libopenvino.so.2026 (libc6,x86-64) => /opt/intel/openvino/lib/libopenvino.so.2026.0.0`
+	soname, ver, ok := parseSoVersion("libopenvino.so", output)
+	assert.True(t, ok)
+	assert.Equal(t, "libopenvino.so.2026", soname)
+	assert.Equal(t, "2026", ver)
+}
+
+func TestParseSoVersion_NoMatch(t *testing.T) {
+	output := `libcudart.so.12 (libc6,x86-64) => /usr/lib/libcudart.so.12.4`
+	_, _, ok := parseSoVersion("libnonexistent.so", output)
+	assert.False(t, ok)
+}
+
+func TestParseSoVersion_EmptyOutput(t *testing.T) {
+	_, _, ok := parseSoVersion("libcudart.so", "")
+	assert.False(t, ok)
+}

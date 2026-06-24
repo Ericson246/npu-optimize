@@ -1,9 +1,12 @@
 package hwinfo
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/shirou/gopsutil/v3/cpu"
@@ -104,4 +107,168 @@ func hasVulkanRuntime() bool {
 	}
 	_, err = os.Stat("/usr/lib/aarch64-linux-gnu/libvulkan.so")
 	return err == nil
+}
+
+var vulkanDrivers = map[string]bool{
+	"amdgpu":   true,
+	"i915":     true,
+	"xe":       true,
+	"nvidia":   true,
+	"nouveau":  true,
+	"msm":      true,
+	"panfrost": true,
+	"v3d":      true,
+}
+
+var vendorMap = map[string]string{
+	"0x1002": "amd",
+	"0x8086": "intel",
+	"0x10de": "nvidia",
+}
+
+const (
+	pciClassVGA     = "0x030000"
+	pciClassDisplay = "0x038000"
+)
+
+func isCardDevice(name string) bool {
+	trimmed := strings.TrimPrefix(name, "card")
+	if trimmed == "" {
+		return false
+	}
+	for _, c := range trimmed {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+func readPCIIDs(vendorID, deviceID string) string {
+	idsPaths := []string{
+		"/usr/share/hwdata/pci.ids",
+		"/usr/share/misc/pci.ids",
+	}
+	for _, path := range idsPaths {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			continue
+		}
+		lines := strings.Split(string(data), "\n")
+		inVendor := false
+		for _, line := range lines {
+			trimmed := strings.TrimSpace(line)
+			if !inVendor {
+				if strings.HasPrefix(line, vendorID[2:]) && (len(line) == 4 || line[4] == ' ') {
+					inVendor = true
+					continue
+				}
+				continue
+			}
+			if trimmed == "" {
+				break
+			}
+			if line[0] != '\t' && line[0] != ' ' {
+				break
+			}
+			trimmed = strings.TrimSpace(trimmed)
+			if strings.HasPrefix(trimmed, deviceID[2:]) && (len(trimmed) == 4 || trimmed[4] == ' ') {
+				parts := strings.SplitN(trimmed, " ", 2)
+				if len(parts) == 2 {
+					return strings.TrimSpace(parts[1])
+				}
+			}
+		}
+	}
+	return ""
+}
+
+func detectVulkanGPUFallback(info *Info) bool {
+	entries, err := os.ReadDir("/sys/class/drm")
+	if err != nil {
+		slog.Debug("vulkan fallback sysfs: cannot read /sys/class/drm", "err", err)
+		return false
+	}
+
+	for _, entry := range entries {
+		if !isCardDevice(entry.Name()) {
+			continue
+		}
+
+		devicePath := filepath.Join("/sys/class/drm", entry.Name(), "device")
+
+		driverPath, err := os.Readlink(filepath.Join(devicePath, "driver"))
+		if err != nil {
+			continue
+		}
+		driverName := filepath.Base(driverPath)
+		if !vulkanDrivers[driverName] {
+			continue
+		}
+
+		vendorBytes, err := os.ReadFile(filepath.Join(devicePath, "vendor"))
+		if err != nil {
+			continue
+		}
+		vendorID := strings.TrimSpace(string(vendorBytes))
+		vendor, ok := vendorMap[vendorID]
+		if !ok {
+			continue
+		}
+
+		deviceBytes, err := os.ReadFile(filepath.Join(devicePath, "device"))
+		if err != nil {
+			continue
+		}
+		deviceID := strings.TrimSpace(string(deviceBytes))
+
+		gpuName := readPCIIDs(vendorID, deviceID)
+		if gpuName == "" {
+			gpuName = fmt.Sprintf("GPU %s:%s", vendorID, deviceID)
+		}
+
+		classBytes, err := os.ReadFile(filepath.Join(devicePath, "class"))
+		integrated := false
+		if err == nil {
+			classStr := strings.TrimSpace(string(classBytes))
+			integrated = classStr == pciClassDisplay
+		} else if vendor == "intel" {
+			integrated = true
+		}
+
+		var vramTotalMB int64
+		vramBytes, err := os.ReadFile(filepath.Join(devicePath, "mem_info_vram_total"))
+		if err == nil {
+			vramStr := strings.TrimSpace(string(vramBytes))
+			if vram, parseErr := strconv.ParseInt(vramStr, 10, 64); parseErr == nil {
+				vramTotalMB = vram / 1024 / 1024
+			}
+		}
+		if vramTotalMB <= 0 {
+			vramTotalMB = info.RAMTotalMB / 2
+			integrated = true
+		}
+
+		vramFreeMB := vramTotalMB
+		if integrated && info.RAMFreeMB < vramTotalMB {
+			vramFreeMB = info.RAMFreeMB
+		}
+
+		info.GPU = &GPUInfo{
+			Vendor:      vendor,
+			Name:        gpuName,
+			VRAMTotalMB: vramTotalMB,
+			VRAMFreeMB:  vramFreeMB,
+			Integrated:  integrated,
+		}
+
+		slog.Warn("vulkan GPU detected via sysfs fallback (vulkaninfo not found)",
+			"vendor", vendor, "gpu", gpuName,
+			"driver", driverName,
+			"vram_mb", vramTotalMB,
+		)
+		return true
+	}
+
+	return false
 }

@@ -1,7 +1,10 @@
 package hwinfo
 
 import (
+	"encoding/json"
 	"log/slog"
+	"os/exec"
+	"strings"
 	"syscall"
 
 	"github.com/shirou/gopsutil/v3/cpu"
@@ -99,4 +102,102 @@ func hasVulkanRuntime() bool {
 	}
 	_ = syscall.FreeLibrary(lib)
 	return true
+}
+
+func detectVulkanGPUFallback(info *Info) bool {
+	cmd := exec.Command("powershell", "-NoProfile", "-Command",
+		"Get-CimInstance Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json -Compress")
+	out, err := cmd.Output()
+	if err != nil {
+		slog.Debug("vulkan fallback WMI command failed", "err", err)
+		return false
+	}
+
+	gpu, ok := parseWMIJSON(out)
+	if !ok {
+		return false
+	}
+
+	gpu.VRAMFreeMB = gpu.VRAMTotalMB
+	if gpu.Integrated && info.RAMFreeMB < gpu.VRAMTotalMB {
+		gpu.VRAMFreeMB = info.RAMFreeMB
+	}
+
+	if gpu.VRAMTotalMB <= 0 {
+		gpu.VRAMTotalMB = info.RAMTotalMB / 2
+		gpu.Integrated = true
+		gpu.VRAMFreeMB = info.RAMFreeMB
+	}
+
+	info.GPU = gpu
+	slog.Warn("vulkan GPU detected via WMI fallback (vulkaninfo not found)",
+		"vendor", gpu.Vendor, "gpu", gpu.Name,
+		"vram_mb", gpu.VRAMTotalMB,
+	)
+	return true
+}
+
+type wmiGPU struct {
+	Name       string `json:"Name"`
+	AdapterRAM int64  `json:"AdapterRAM"`
+}
+
+func parseWMIJSON(data []byte) (*GPUInfo, bool) {
+	text := strings.TrimSpace(string(data))
+	if text == "" || text == "null" {
+		return nil, false
+	}
+
+	var single wmiGPU
+	if err := json.Unmarshal(data, &single); err == nil && single.Name != "" {
+		return buildFromWMI(single), true
+	}
+
+	var multiple []wmiGPU
+	if err := json.Unmarshal(data, &multiple); err != nil {
+		return nil, false
+	}
+
+	for _, g := range multiple {
+		if g.Name == "" {
+			continue
+		}
+		if !strings.Contains(strings.ToLower(g.Name), "microsoft basic display") {
+			return buildFromWMI(g), true
+		}
+	}
+
+	for _, g := range multiple {
+		if g.Name != "" {
+			return buildFromWMI(g), true
+		}
+	}
+
+	return nil, false
+}
+
+func buildFromWMI(g wmiGPU) *GPUInfo {
+	lower := strings.ToLower(g.Name)
+	vendor := "unknown"
+	switch {
+	case strings.Contains(lower, "nvidia"):
+		vendor = "nvidia"
+	case strings.Contains(lower, "advanced micro devices"), strings.Contains(lower, "amd"), strings.Contains(lower, "radeon"):
+		vendor = "amd"
+	case strings.Contains(lower, "intel"):
+		vendor = "intel"
+	case strings.Contains(lower, "apple"):
+		vendor = "apple"
+	}
+
+	integrated := vendor == "intel" || vendor == "apple"
+
+	vramMB := g.AdapterRAM / 1024 / 1024
+
+	return &GPUInfo{
+		Vendor:      vendor,
+		Name:        g.Name,
+		VRAMTotalMB: vramMB,
+		Integrated:  integrated,
+	}
 }

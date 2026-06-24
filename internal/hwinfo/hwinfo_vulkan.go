@@ -47,6 +47,15 @@ func detectNvidiaGPU(info *Info) bool {
 }
 
 func detectVulkanGPU(info *Info) bool {
+	if detectVulkanGPUWithVulkaninfo(info) {
+		return true
+	}
+
+	slog.Debug("vulkaninfo not available, trying platform fallback")
+	return detectVulkanGPUFallback(info)
+}
+
+func detectVulkanGPUWithVulkaninfo(info *Info) bool {
 	cmd := exec.Command("vulkaninfo", "--summary")
 	out, err := cmd.Output()
 	if err != nil {

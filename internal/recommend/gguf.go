@@ -23,6 +23,7 @@ type GGUFHeader struct {
 	VisionDim     *int   `json:"vision_dim,omitempty"`
 	VisionLayers  *int   `json:"vision_layers,omitempty"`
 	Architecture  string `json:"architecture"`
+	NumParameters int64  `json:"num_parameters,omitempty"`
 }
 
 func ParseHeader(data []byte) (*GGUFHeader, error) {
@@ -84,6 +85,8 @@ func ParseHeader(data []byte) (*GGUFHeader, error) {
 			}
 		case key == "general.architecture":
 			h.Architecture = toString(value)
+		case key == "general.parameter_count":
+			h.NumParameters = toInt64(value)
 		}
 	}
 
@@ -106,6 +109,19 @@ func toInt(v any) int {
 			return 1
 		}
 		return 0
+	default:
+		return 0
+	}
+}
+
+func toInt64(v any) int64 {
+	switch val := v.(type) {
+	case uint64:
+		return int64(val)
+	case int64:
+		return val
+	case float64:
+		return int64(val)
 	default:
 		return 0
 	}

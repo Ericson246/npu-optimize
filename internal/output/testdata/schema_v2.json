@@ -1,0 +1,65 @@
+{
+  "$schema": "https://Ericson246.github.io/npu-optimize/schemas/v2.json",
+  "version": 2,
+  "generated_at": "2026-06-24T12:00:00Z",
+  "tool_version": "0.3.0",
+  "backend": "llama.cpp",
+  "mode_used": "gpu-only",
+  "viable": true,
+  "hardware_fingerprint": "test-fingerprint-001",
+  "hardware": {
+    "gpu": {
+      "vendor": "nvidia",
+      "name": "NVIDIA GeForce RTX 4060",
+      "vram_total_mb": 8192,
+      "vram_free_mb": 7000,
+      "integrated": false,
+      "backends": [
+        {"name": "cuda", "version": "12", "detected_lib": "cudart64_12.dll"},
+        {"name": "vulkan"}
+      ]
+    },
+    "cpu": {
+      "name": "Test CPU",
+      "cores": 8,
+      "threads": 16
+    },
+    "ram_total_mb": 32768,
+    "ram_free_mb": 24000
+  },
+  "runtime_recommendation": {
+    "backend": "cuda",
+    "version": "b9704",
+    "source": "ggml-org/llama.cpp",
+    "download_url": "https://example.com/cuda-12.zip",
+    "sha256": "abc123def456",
+    "size_bytes": 104857600,
+    "format": "zip"
+  },
+  "recommended": {
+    "repo": "test/repo",
+    "file": "model.gguf",
+    "architecture": "llama",
+    "architecture_type": "dense",
+    "multimodal": false,
+    "n_layers": 32,
+    "n_kv_heads": 8,
+    "head_dim": 128,
+    "fits_in_vram": true,
+    "vram_formula_used": "manual",
+    "vram_margin_mb": 1024,
+    "n_gpu_layers": -1,
+    "ctx_max_estimate": 32768,
+    "size_bytes": 4000000000
+  },
+  "inference_params": {
+    "n_gpu_layers": -1,
+    "threads": 8,
+    "n_batch": 2048,
+    "n_ubatch": 512,
+    "ctx_size": 16384,
+    "flash_attn": true,
+    "cache_type_k": "q8_0",
+    "cache_type_v": "q8_0"
+  }
+}

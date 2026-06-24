@@ -3,7 +3,10 @@ package output
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -98,4 +101,118 @@ func TestEncodeError_WithoutDetails(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, decoded.ErrorCode)
 	assert.Nil(t, decoded.Details)
+}
+
+func testOutput(ver int, withRuntime bool, withBackendVersion string) *Output {
+	ts := time.Date(2026, 6, 24, 12, 0, 0, 0, time.UTC)
+	o := &Output{
+		Schema:              fmt.Sprintf("https://Ericson246.github.io/npu-optimize/schemas/v%d.json", ver),
+		Version:             ver,
+		GeneratedAt:         ts,
+		ToolVersion:         "0.3.0",
+		Backend:             "llama.cpp",
+		ModeUsed:            "gpu-only",
+		Viable:              true,
+		HardwareFingerprint: "test-fingerprint-001",
+		Hardware: &HardwareInfo{
+			GPU: &GPUInfo{
+				Vendor:      "nvidia",
+				Name:        "NVIDIA GeForce RTX 4060",
+				VRAMTotalMB: 8192,
+				VRAMFreeMB:  7000,
+				Integrated:  false,
+				Backends: []BackendInfo{
+					{Name: "cuda", Version: "12", DetectedLib: "cudart64_12.dll"},
+					{Name: "vulkan"},
+				},
+			},
+			CPU: CPUInfo{
+				Name:    "Test CPU",
+				Cores:   8,
+				Threads: 16,
+			},
+			RAMTotalMB: 32768,
+			RAMFreeMB:  24000,
+		},
+		Recommended: &Recommended{
+			Repo:             "test/repo",
+			File:             "model.gguf",
+			Architecture:     "llama",
+			ArchitectureType: "dense",
+			NLayers:          32,
+			NKVHeads:         8,
+			HeadDim:          128,
+			FitsInVRAM:       true,
+			VRAMFormulaUsed:  "manual",
+			VRAMMarginMB:     1024,
+			NGPULayers:       -1,
+			CtxMaxEstimate:   32768,
+			SizeBytes:        4_000_000_000,
+		},
+		InferenceParams: &InferenceParams{
+			NGPULayers: -1,
+			Threads:    8,
+			NBatch:     2048,
+			NUBatch:    512,
+			CtxSize:    16384,
+			FlashAttn:  true,
+			CacheTypeK: "q8_0",
+			CacheTypeV: "q8_0",
+		},
+	}
+
+	if withRuntime {
+		o.RuntimeRecommend = &RuntimeRecommend{
+			Backend:        "cuda",
+			BackendVersion: withBackendVersion,
+			Version:        "b9704",
+			Source:         "ggml-org/llama.cpp",
+			DownloadURL:    "https://example.com/cuda-12.zip",
+			SHA256:         "abc123def456",
+			SizeBytes:      104857600,
+			Format:         "zip",
+		}
+	}
+
+	if ver >= 3 {
+		o.BackendParams = &BackendParams{
+			LlamaCpp: LlamaCppParams{
+				NoMMAP: false,
+				MLock:  false,
+				CPUMoE: false,
+			},
+		}
+	}
+
+	return o
+}
+
+func TestGolden_Version1(t *testing.T) {
+	o := testOutput(1, false, "")
+	var buf bytes.Buffer
+	require.NoError(t, Encode(&buf, o))
+
+	golden, err := os.ReadFile("testdata/schema_v1.json")
+	require.NoError(t, err)
+	assert.JSONEq(t, string(golden), buf.String())
+}
+
+func TestGolden_Version2(t *testing.T) {
+	o := testOutput(2, true, "")
+	var buf bytes.Buffer
+	require.NoError(t, Encode(&buf, o))
+
+	golden, err := os.ReadFile("testdata/schema_v2.json")
+	require.NoError(t, err)
+	assert.JSONEq(t, string(golden), buf.String())
+}
+
+func TestGolden_Version3(t *testing.T) {
+	o := testOutput(3, true, "12.4")
+	var buf bytes.Buffer
+	require.NoError(t, Encode(&buf, o))
+
+	golden, err := os.ReadFile("testdata/schema_v3.json")
+	require.NoError(t, err)
+	assert.JSONEq(t, string(golden), buf.String())
 }

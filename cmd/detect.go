@@ -196,10 +196,10 @@ func runDetect() error {
 	if osc < 1 {
 		osc = 1
 	}
-	if osc > 2 {
+	if osc > 3 {
 		slog.Warn("requested schema version not available, using highest available",
-			"requested", osc, "used", 2)
-		osc = 2
+			"requested", osc, "used", 3)
+		osc = 3
 	}
 
 	result := output.New(osc)
@@ -258,15 +258,17 @@ func runDetect() error {
 				"source", entry.SourceName,
 				"version", ver,
 			)
-			result.Version = 2
+			result.Version = 3
+			result.Schema = "https://Ericson246.github.io/npu-optimize/schemas/v3.json"
 			result.RuntimeRecommend = &output.RuntimeRecommend{
-				Backend:     entry.Backend,
-				Version:     ver,
-				Source:      entry.SourceName,
-				DownloadURL: entry.DownloadURL,
-				SHA256:      entry.SHA256,
-				SizeBytes:   entry.SizeBytes,
-				Format:      entry.Format,
+				Backend:        entry.Backend,
+				BackendVersion: entry.BackendVersion,
+				Version:        ver,
+				Source:         entry.SourceName,
+				DownloadURL:    entry.DownloadURL,
+				SHA256:         entry.SHA256,
+				SizeBytes:      entry.SizeBytes,
+				Format:         entry.Format,
 			}
 		}
 	}

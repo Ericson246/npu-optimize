@@ -373,6 +373,9 @@ func (s *Service) buildFallbacks(c candidate, vramFreeMB int64) []Fallback {
 		if !strings.HasSuffix(sib.RFilename, ".gguf") {
 			continue
 		}
+		if strings.Contains(sib.RFilename, "mmproj") {
+			continue
+		}
 		if sib.RFilename == c.bestQuant.File {
 			continue
 		}

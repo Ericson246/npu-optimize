@@ -63,6 +63,9 @@ func findQuantFiles(siblings []hfclient.Sibling, sizeFn func(string) int64) []Qu
 		if !strings.HasSuffix(sib.RFilename, ".gguf") {
 			continue
 		}
+		if strings.Contains(sib.RFilename, "mmproj") || strings.Contains(sib.RFilename, "/") {
+			continue
+		}
 		quantName := extractQuant(sib.RFilename)
 		if quantName == "" {
 			continue

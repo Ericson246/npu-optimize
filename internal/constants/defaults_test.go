@@ -8,14 +8,14 @@ import (
 
 func TestAppConstants(t *testing.T) {
 	assert.Equal(t, "npu-optimize", AppName)
-	assert.Equal(t, "0.2.0", Version)
+	assert.Equal(t, "0.3.0", Version)
 	assert.Equal(t, "MIT", License)
-	assert.Equal(t, "npu-optimize/0.2.0", UserAgent)
+	assert.Equal(t, "npu-optimize/0.3.0", UserAgent)
 }
 
 func TestDefaultValues(t *testing.T) {
 	assert.Equal(t, 16384, DefaultCtxSize)
-	assert.Equal(t, 1024, DefaultVRAMMargin)
+	assert.Equal(t, 0, DefaultVRAMMargin)
 	assert.Equal(t, 3.0, DefaultMinTS)
 }
 

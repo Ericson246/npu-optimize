@@ -1,8 +1,8 @@
 package constants
 
 var (
-	Version   = "0.2.0"
-	UserAgent = "npu-optimize/0.2.0"
+	Version   = "0.3.0"
+	UserAgent = "npu-optimize/0.3.0"
 )
 
 const (
@@ -10,7 +10,7 @@ const (
 	License = "MIT"
 
 	DefaultCtxSize    = 16384
-	DefaultVRAMMargin = 1024
+	DefaultVRAMMargin = 0 // 0 = auto-calculate (5% of free VRAM, min 256, max 1024)
 	DefaultMinTS      = 3.0
 
 	HFAPIBaseURL = "https://huggingface.co"

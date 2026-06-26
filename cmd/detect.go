@@ -54,14 +54,13 @@ type detectConfig struct {
 }
 
 func resolveDetectConfig(mode string, hw *hwinfo.Info) (*detectConfig, error) {
-	hasNVIDIA := hw.GPU != nil && hw.GPU.Vendor == "nvidia"
-	isIntegrated := hw.GPU != nil && hw.GPU.Integrated
 	hasRAM := hw.RAMFreeMB >= 4000
 
 	switch mode {
 	case "gpu-only":
-		if !hasNVIDIA {
-			return nil, &hwUnsupportedError{msg: "GPU-only mode requires an NVIDIA GPU"}
+		hasDiscreteGPU := hw.GPU != nil && !hw.GPU.Integrated && hw.GPU.VRAMFreeMB >= 3072
+		if !hasDiscreteGPU {
+			return nil, &hwUnsupportedError{msg: "GPU-only requires a discrete GPU with at least 3 GB of VRAM"}
 		}
 		return &detectConfig{
 			modeUsed:          "gpu-only",
@@ -109,7 +108,8 @@ func resolveDetectConfig(mode string, hw *hwinfo.Info) (*detectConfig, error) {
 		}, nil
 
 	default:
-		if hasNVIDIA {
+		hasDiscreteGPU := hw.GPU != nil && !hw.GPU.Integrated && hw.GPU.VRAMFreeMB >= 4096
+		if hasDiscreteGPU {
 			return &detectConfig{
 				modeUsed:          "gpu-only",
 				availableMemoryMB: hw.GPU.VRAMFreeMB,
@@ -118,13 +118,20 @@ func resolveDetectConfig(mode string, hw *hwinfo.Info) (*detectConfig, error) {
 				flashAttn:         true,
 			}, nil
 		}
-		if isIntegrated {
+		if hw.GPU != nil {
+			vram := hw.GPU.VRAMFreeMB
+			cpuRAM := hw.RAMFreeMB * 70 / 100
+			total := vram + cpuRAM
+			if total < 4000 {
+				return nil, &hwUnsupportedError{msg: "Insufficient total memory to run a model"}
+			}
+			flashAttn := !hw.GPU.Integrated
 			return &detectConfig{
 				modeUsed:          "partial",
-				availableMemoryMB: hw.GPU.VRAMFreeMB + hw.RAMFreeMB*70/100,
+				availableMemoryMB: total,
 				nGPULayers:        -1,
 				nBatch:            1024,
-				flashAttn:         false,
+				flashAttn:         flashAttn,
 			}, nil
 		}
 		if !hasRAM {
@@ -139,6 +146,17 @@ func resolveDetectConfig(mode string, hw *hwinfo.Info) (*detectConfig, error) {
 			flashAttn:         false,
 		}, nil
 	}
+}
+
+func calcVRAMMargin(vramFreeMB int64) int {
+	margin := vramFreeMB * 5 / 100
+	if margin < 256 {
+		margin = 256
+	}
+	if margin > 1024 {
+		margin = 1024
+	}
+	return int(margin)
 }
 
 type hwUnsupportedError struct {
@@ -185,9 +203,19 @@ func runDetect() error {
 		fatal(3, "hardware_unsupported", err.Error())
 	}
 
+	effectiveMargin := vramMargin
+	if effectiveMargin == 0 {
+		vramFree := int64(0)
+		if hw.GPU != nil {
+			vramFree = hw.GPU.VRAMFreeMB
+		}
+		effectiveMargin = calcVRAMMargin(vramFree)
+	}
+
 	slog.Info("detect config",
 		"mode", cfg.modeUsed,
 		"available_memory_mb", cfg.availableMemoryMB,
+		"vram_margin_mb", effectiveMargin,
 		"n_gpu_layers", cfg.nGPULayers,
 		"n_batch", cfg.nBatch,
 	)
@@ -280,7 +308,7 @@ func runDetect() error {
 
 	svc := recommend.NewService(client, recommend.Config{
 		CtxSize:           ctxSize,
-		VRAMMargin:        vramMargin,
+		VRAMMargin:        effectiveMargin,
 		Mode:              mode,
 		AvailableMemoryMB: cfg.availableMemoryMB,
 	})
@@ -301,6 +329,11 @@ func runDetect() error {
 			fatal(1, "internal_error", "Failed to encode output", "err", encErr)
 		}
 		os.Exit(2)
+	}
+
+	vramFormulaUsed := "manual"
+	if mode == "auto" {
+		vramFormulaUsed = "auto"
 	}
 
 	if rec.Header != nil {
@@ -325,8 +358,8 @@ func runDetect() error {
 			Score:            rec.Score,
 			ArchTier:         rec.ArchTier,
 			FitsInVRAM:       rec.FitsInVRAM,
-			VRAMFormulaUsed:  "manual",
-			VRAMMarginMB:     vramMargin,
+			VRAMFormulaUsed:  vramFormulaUsed,
+			VRAMMarginMB:     effectiveMargin,
 			NGPULayers:       cfg.nGPULayers,
 			CtxMaxEstimate:   rec.VRAMResult.CtxMaxEstimate,
 			TSEstimated:      rec.VRAMResult.TSEstimated,

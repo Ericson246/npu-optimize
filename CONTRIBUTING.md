@@ -38,7 +38,7 @@ test: add tests for extrapolation formula
 1. Fork + branch
 2. CI must pass (lint + test + build)
 3. Add tests for new code
-4. Update ADRs if architecture changes
+4. Update ADR-007 if architecture changes
 5. One change per PR
 
 ## AI Policy
@@ -50,7 +50,7 @@ test: add tests for extrapolation formula
 
 ## Project Structure
 
-See [ADR-001](/docs/ADR-001-npu-optimize.md) for the full architecture.
+See [ADR-007](/docs/ADR-007-npu-optimize-v3.md) for the current architecture.
 
 ## Reporting Bugs
 

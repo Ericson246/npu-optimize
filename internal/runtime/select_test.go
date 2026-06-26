@@ -183,6 +183,10 @@ func cpuOnlyHW() *hwinfo.Info {
 }
 
 func nvidiaCUDA12HW() *hwinfo.Info {
+	detectedLib := "cudart64_12.dll"
+	if runtime.GOOS != "windows" {
+		detectedLib = "libcudart.so.12"
+	}
 	return &hwinfo.Info{
 		GPU: &hwinfo.GPUInfo{
 			Vendor:      "nvidia",
@@ -191,7 +195,7 @@ func nvidiaCUDA12HW() *hwinfo.Info {
 			VRAMFreeMB:  7000,
 			Integrated:  false,
 			Backends: []hwinfo.BackendInfo{
-				{Name: "cuda", Version: "12", DetectedLib: "cudart64_12.dll"},
+				{Name: "cuda", Version: "12", DetectedLib: detectedLib},
 				{Name: "vulkan"},
 			},
 		},
@@ -206,6 +210,10 @@ func nvidiaCUDA12HW() *hwinfo.Info {
 }
 
 func nvidiaCUDA11HW() *hwinfo.Info {
+	detectedLib := "cudart64_11.dll"
+	if runtime.GOOS != "windows" {
+		detectedLib = "libcudart.so.11"
+	}
 	return &hwinfo.Info{
 		GPU: &hwinfo.GPUInfo{
 			Vendor:      "nvidia",
@@ -214,7 +222,7 @@ func nvidiaCUDA11HW() *hwinfo.Info {
 			VRAMFreeMB:  6000,
 			Integrated:  false,
 			Backends: []hwinfo.BackendInfo{
-				{Name: "cuda", Version: "11", DetectedLib: "cudart64_11.dll"},
+				{Name: "cuda", Version: "11", DetectedLib: detectedLib},
 			},
 		},
 		CPU: hwinfo.CPUInfo{

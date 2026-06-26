@@ -31,7 +31,7 @@ func TestCalculateVRAM_Fits(t *testing.T) {
 	result := calc.CalculateVRAM(calc.Params{
 		VRAMFreeMB: 8000,
 		CtxSize:    4096,
-		VRAMMargin: 1024,
+		VRAMMargin: 400,
 		FileSize:   4_000_000_000,
 		Header:     h,
 	})
@@ -49,7 +49,7 @@ func TestCalculateVRAM_NoFit(t *testing.T) {
 	result := calc.CalculateVRAM(calc.Params{
 		VRAMFreeMB: 2000,
 		CtxSize:    4096,
-		VRAMMargin: 1024,
+		VRAMMargin: 256,
 		FileSize:   4_000_000_000,
 		Header:     h,
 	})
@@ -62,7 +62,7 @@ func TestCalculateVRAM_NilHeader(t *testing.T) {
 	result := calc.CalculateVRAM(calc.Params{
 		VRAMFreeMB: 8000,
 		CtxSize:    4096,
-		VRAMMargin: 1024,
+		VRAMMargin: 400,
 		FileSize:   100_000_000,
 		Header:     nil,
 	})
@@ -77,7 +77,7 @@ func TestCalculateVRAM_ZeroFileSize(t *testing.T) {
 	result := calc.CalculateVRAM(calc.Params{
 		VRAMFreeMB: 8000,
 		CtxSize:    4096,
-		VRAMMargin: 1024,
+		VRAMMargin: 400,
 		FileSize:   0,
 		Header:     h,
 	})
@@ -107,7 +107,7 @@ func TestCalculateVRAM_NoKVcache(t *testing.T) {
 	result := calc.CalculateVRAM(calc.Params{
 		VRAMFreeMB: 8000,
 		CtxSize:    4096,
-		VRAMMargin: 1024,
+		VRAMMargin: 400,
 		FileSize:   100_000_000,
 		Header:     h,
 	})
@@ -138,7 +138,7 @@ func TestCalculateVRAM_NoTSestimateWithoutBandwidth(t *testing.T) {
 	result := calc.CalculateVRAM(calc.Params{
 		VRAMFreeMB: 8000,
 		CtxSize:    4096,
-		VRAMMargin: 1024,
+		VRAMMargin: 400,
 		FileSize:   100_000_000,
 		Header:     h,
 	})

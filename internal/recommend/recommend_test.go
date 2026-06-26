@@ -24,6 +24,7 @@ func newMockHW(vramFreeMB int64) *hwinfo.Info {
 			Name:        "RTX 4060",
 			VRAMTotalMB: 8192,
 			VRAMFreeMB:  vramFreeMB,
+			Integrated:  false,
 		},
 		CPU: hwinfo.CPUInfo{
 			Name:    "Test CPU",
@@ -141,7 +142,7 @@ func TestRecommend_Success(t *testing.T) {
 
 	svc := NewService(client, Config{
 		CtxSize:           4096,
-		VRAMMargin:        1024,
+		VRAMMargin:        400,
 		AvailableMemoryMB: 8000,
 	})
 
@@ -191,7 +192,7 @@ func TestRecommend_SelectsBestQuant(t *testing.T) {
 
 	svc := NewService(client, Config{
 		CtxSize:           4096,
-		VRAMMargin:        1024,
+		VRAMMargin:        400,
 		AvailableMemoryMB: 8000,
 	})
 
@@ -252,7 +253,7 @@ func TestRecommend_SkipsModelTooLarge(t *testing.T) {
 
 	svc := NewService(client, Config{
 		CtxSize:           4096,
-		VRAMMargin:        1024,
+		VRAMMargin:        256,
 		AvailableMemoryMB: 2000,
 	})
 
@@ -275,7 +276,7 @@ func TestRecommend_AuthError(t *testing.T) {
 
 	svc := NewService(client, Config{
 		CtxSize:           4096,
-		VRAMMargin:        1024,
+		VRAMMargin:        400,
 		AvailableMemoryMB: 8000,
 	})
 
@@ -300,7 +301,7 @@ func TestRecommend_NoModels(t *testing.T) {
 
 	svc := NewService(client, Config{
 		CtxSize:           4096,
-		VRAMMargin:        1024,
+		VRAMMargin:        400,
 		AvailableMemoryMB: 8000,
 	})
 
@@ -320,7 +321,7 @@ func TestRecommend_CPUWithRAM(t *testing.T) {
 
 	svc := NewService(client, Config{
 		CtxSize:           4096,
-		VRAMMargin:        1024,
+		VRAMMargin:        400,
 		AvailableMemoryMB: 8000,
 	})
 
@@ -434,7 +435,7 @@ func TestRecommend_UsesSearchParam(t *testing.T) {
 
 	svc := NewService(client, Config{
 		CtxSize:           4096,
-		VRAMMargin:        1024,
+		VRAMMargin:        400,
 		AvailableMemoryMB: 8000,
 	})
 
